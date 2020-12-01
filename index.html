@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<h3>Game of Thrones Character Co-occurence</h3>
+</head>
+<p id="Option B">
+<svg id="chord" height="800" width="800"></svg>
+</p>
+<body>
+<script>
+const width = d3.select("#chord").attr("width");
+const height = d3.select("#chord").attr("height");
+const chordChart = d3.select("#chord").append("g");
+  
+const requestData= async()=>{
+const data=await d3.json("./datasets/thrones-cooccur.json");
+console.log(data);
+let nodes = data.nodes;
+let edges = data.edges;
+let matrix = [];
+let dictionary={};
+for (let i=0; i<nodes.length; i++) { 
+     let row = [];
+     for (let j=0; j<nodes.length; j++) { 
+         dictionary[nodes[i].Name]=i;
+         row.push(0); }
+     matrix.push(row);
+    }
+console.log(matrix);
+console.log(dictionary);
+edges.forEach( d => {
+      
+if (d.weight > 5) {
+      
+  
+matrix[dictionary[d.source]][dictionary[d.target]] = d.weight;
+matrix[dictionary[d.target]][dictionary[d.source]]= d.weight;
+        
+      }
+    });
+ 
+console.log(matrix);
+let radius = 270;
+let chordGen = d3.chord()
+                 .padAngle(.04)
+                 .sortSubgroups(d3.descending)
+                 .sortChords(d3.descending)
+let arcGen = d3.arc()
+               .innerRadius(radius)
+               .outerRadius(radius + 20)
+
+let ribbonGen = d3.ribbon()
+                  .radius(radius)
+let chords = chordGen(matrix);
+    console.log(chords);
+chordChart.attr("transform","translate("+width/2+","+height/2+")");
+    
+
+let colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+
+let ring = chordChart.append("g")
+                     .selectAll("g")
+                     .data(chords.groups)
+                     .join("g");
+    
+ring.append("path")
+    .attr("fill", d => colorScale( nodes[ d.index ].Affiliation ))
+    .attr("stroke", d => colorScale( nodes[ d.index ].Affiliation ))
+    .attr("d", arcGen)
+    .attr("class", "color");
+
+
+
+let ribbons = chordChart.append("g")
+                        .selectAll("path")
+                        .data(chords)
+                        .join("path")
+                        .attr("fill-opacity", 0.5)
+                        .attr("stroke", "none")
+                        .attr("fill", d => colorScale( nodes[ d.source.index ].Name))
+                        .attr("d", ribbonGen)
+                        .attr('class', 'color');
+                        
+
+chords.groups.forEach( d => {
+let transform = '';
+
+let midpoint = (d.startAngle + d.endAngle) / 2;
+let rotation = ( midpoint ) * ( 180 / Math.PI ) - 90;
+transform = transform + "rotate("+ rotation +") ";
+transform = transform + "translate("+ (radius + 25)+",0) ";
+if (rotation > 90) {
+        transform = transform + "rotate(180)";
+      
+        d.anchor = "end";
+      }
+      d.trans = transform;
+    });
+    
+// ring.append("text")
+//     .attr("transform", d => d.trans)
+//     .text(d => nodes[ d.index ].Name )
+//     .attr("text-anchor", d => d.anchor)
+//     .attr('class', 'color');
+
+// ring.on("mouseenter", function(){
+// d3.select(this).transition().duration(100)
+//   .attr("stroke-width", "5")
+// })
+// .on("mouseleave", function(){
+// d3.select(this).transition().duration(100)
+//   .attr("stroke-width", "1");
+// });
+
+
+
+}
+requestData();
+</script>
+</body>
+</html>
