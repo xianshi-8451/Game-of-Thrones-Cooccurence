@@ -79,7 +79,7 @@ let ribbons = chordChart.append("g")
                         .join("path")
                         .attr("fill-opacity", 0.5)
                         .attr("stroke", "none")
-                        .attr("fill", d => colorScale( nodes[ d.source.index ].Name))
+                        .attr("fill", d => colorScale( nodes[ d.target.index ].Affiliation))
                         .attr("d", ribbonGen)
                         .attr('class', 'color');
                         
